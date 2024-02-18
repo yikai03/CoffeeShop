@@ -14,16 +14,6 @@ public class CCP_Assignment {
         barista3.start();
         cg.start();
         test.start();
-
-        // try {
-        //     Thread.sleep(60000);
-        // } catch (InterruptedException e) {
-        //     e.printStackTrace();
-        // }
-        // System.out.println("cg thread status: " + cg.getState());
-        // System.out.println("barista1 thread status: " + barista1.getState());
-        // System.out.println("barista2 thread status: " + barista2.getState());
-        // System.out.println("barista3 thread status: " + barista3.getState());
     }
     
 }

@@ -1,9 +1,9 @@
 import java.util.concurrent.TimeUnit;
 
 public class Clock extends Thread{
-    Barista barista1;
-    Barista barista2;
-    Barista barista3;
+    Barista barista1;//Barista 1
+    Barista barista2;//Barista 2
+    Barista barista3;//Barista 3
     CoffeeShop shop;
 
     public Clock(Barista barista1, CoffeeShop shop, Barista barista2, Barista barista3){
@@ -31,12 +31,12 @@ public class Clock extends Thread{
                     barista3.setClosingTime(true);
                     for(int j = 0; j < 3; j++){
                         synchronized(shop){
-                            shop.NotifyBaristaToWork();
+                            shop.NotifyBaristaToWork();//Notify the barista to close the shop
                         }
                     }
                     while(true){
                         if(shop.LeftCustomer == 20 && (barista1.getState() == Thread.State.TERMINATED) && (barista2.getState() == Thread.State.TERMINATED) && (barista3.getState() == Thread.State.TERMINATED)){
-                            shop.showTotalDrink();
+                            shop.showTotalDrink();//Show the total drink that has been made
                             break;
                         }
                     }
@@ -44,11 +44,12 @@ public class Clock extends Thread{
                 }
             }
 
-            if(shop.LeftCustomer == 20){
+            if(shop.LeftCustomer == 20){//If all the customer left, the shop will close
                 break;
             }
+            //Hence, the shop will close with assumption 2
 
-            while(shop.CustomerInShop!=0){
+            while(shop.CustomerInShop!=0){//If there is still customer in the shop, the shop will wait for another 3 seconds
                 try {
                     System.out.println("\u001b[37;47m" + "Clock: Seems like there is still " + shop.CustomerInShop + " customer in shop! Wait for another 3 second..." + "\u001b[0m");
                     Thread.sleep(3000);
@@ -57,28 +58,23 @@ public class Clock extends Thread{
                     e.printStackTrace();
                 }
             }
-            System.out.println("\u001b[37;47m" + "Clock: It's closing time!" + "\u001b[0m");
+            System.out.println("\u001b[37;47m" + "Clock: It's closing time!" + "\u001b[0m");//If there is no customer in the shop, the shop will close
             barista1.setClosingTime(true);
             barista2.setClosingTime(true);
             barista3.setClosingTime(true);
             for(int i = 0; i < 3; i++){
                 synchronized(shop){
-                    shop.NotifyBaristaToWork();
+                    shop.NotifyBaristaToWork();//Notify the barista to close the shop
                 }
             }
         
             while(true){
-            if((barista1.getState() == Thread.State.TERMINATED) && (barista2.getState() == Thread.State.TERMINATED) && (barista3.getState() == Thread.State.TERMINATED)){
-                shop.showTotalDrink();
-                // System.out.println( "Find: "+shop.QueueOfFindingSeat.size());
-                // System.out.println("Order: " + shop.QueueOfOrder.size());
-                // // System.out.println("Take: " + shop.QueueOfTakingDrink.size());
-                // System.out.println("B Making: " + shop.QueueOfBaristaMakingDrink.size());
-                // System.out.println("B Taking: " + shop.QueueOfBaristaTakingOrder.size());
-
-                break;
-            }            
-        }
+                if((barista1.getState() == Thread.State.TERMINATED) && (barista2.getState() == Thread.State.TERMINATED) && (barista3.getState() == Thread.State.TERMINATED)){
+                    shop.showTotalDrink();
+                    break;
+                }
+            }
+            //Hence, the shop will close with assumption 1
         }
     }
 }
