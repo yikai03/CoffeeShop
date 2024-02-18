@@ -12,6 +12,8 @@ public class Customer extends Thread{
     private String MyColor;
     private String MyColorReset;
     private static int CurCappu =0, CurEx =0, CurJuice=0;
+    private LeaveTimer LeaveTimer;
+    private boolean LeaveDueTimer;
     
     public Customer(String id, CoffeeShop shop){
         this.Id = id;
@@ -21,6 +23,8 @@ public class Customer extends Thread{
         this.shop = shop;      
         this.MyColor = color.GenerateColor();
         this.MyColorReset = color.getRESET();
+        this.LeaveTimer = new LeaveTimer(shop, this);
+        this.LeaveDueTimer = false;
     }
     
     public String GetCustomerId(){
@@ -55,8 +59,25 @@ public class Customer extends Thread{
         this.TakenDrink = TakenDrink;
     }
 
+    public void setShareSeat(boolean ShareSeat) {
+        this.ShareSeat = ShareSeat;
+    }
+
     public String getOrder() {
         return this.Order;
+    }
+    
+
+    public void startTimer(){
+        LeaveTimer.start();
+    }
+
+    public void setLeaveDueTimer(boolean LeaveDueTimer) {
+        this.LeaveDueTimer = LeaveDueTimer;
+    }
+
+    public boolean getLeaveDueTimer() {
+        return LeaveDueTimer;
     }
     
     public static String GenerateOrder(){

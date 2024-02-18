@@ -8,20 +8,25 @@ import java.util.logging.Logger;
 
 public class CoffeeShop {
     BlockingQueue<Customer> QueueOfOrder = new LinkedBlockingQueue<>(5);
-    private BlockingQueue<Barista> QueueOfBaristaTakingOrder = new LinkedBlockingQueue<>();
-    BlockingQueue<Customer> QueueOfTakingDrink = new LinkedBlockingQueue<>();
+     BlockingQueue<Barista> QueueOfBaristaTakingOrder = new LinkedBlockingQueue<>();
+    // BlockingQueue<Customer> QueueOfTakingDrink = new LinkedBlockingQueue<>();
     BlockingQueue<Customer> QueueOfFindingSeat = new LinkedBlockingQueue<>();
+    BlockingQueue<Customer> QueueOfAccordingSeat = new LinkedBlockingQueue<>(1);
     private Table[] tables;
-    private BlockingQueue<Barista> QueueOfBaristaMakingDrink = new LinkedBlockingQueue<>();
+     BlockingQueue<Barista> QueueOfBaristaMakingDrink = new LinkedBlockingQueue<>();
     private Lock ExpressoMachine = new ReentrantLock();
     private Lock MilkMachine = new ReentrantLock();
     private Lock JuiceTap = new ReentrantLock();
     private int TotalCappu = 0, TotalEx = 0, TotalJuice = 0;
+    private int CappuPrice = 9, ExPrice = 6, JuicePrice = 7;
+    int CustomerInShop = 0;
+    int LeftCustomer = 0;
+    Lock IncrementLock = new ReentrantLock();
 
     public CoffeeShop() {
         tables = new Table[5];
         for(int i = 0; i < 5; i++) {
-            tables[i] = new Table(i+1);
+            tables[i] = new Table(i+1, this);
         }
     }
     
@@ -30,34 +35,66 @@ public class CoffeeShop {
         synchronized(QueueOfOrder){
             System.out.println(customer.GetMyColor()+ "Customer " + customer.GetCustomerId() + " Arrived in Coffee Shop." + "Size of queue now : " + QueueOfOrder.size() + " Remaining Capacity: " + QueueOfOrder.remainingCapacity() + " ShareSeat: " + customer.isShareSeat() + customer.GetMyColorReset());
             success = QueueOfOrder.offer(customer, 0, TimeUnit.MILLISECONDS);
+            // IncrementLock.lock();
+            CustomerInShop++;
+            // IncrementLock.unlock();
         }
-            if (success) {
-                NotifyBaristaToWork();
-            } else {
-                System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + ": Order Queue is too long, I am leaving. Bye" + customer.GetMyColorReset());
+        if (success) {
+            NotifyBaristaToWork();
+            customer.startTimer();
+        } else {
+            System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + ": Order Queue is too long, I am leaving. Bye" + customer.GetMyColorReset());
+            // IncrementLock.lock();
+            synchronized(QueueOfOrder){
+            CustomerInShop--;
+            LeftCustomer++;//Potential threat of race condition
+            // IncrementLock.unlock();
             }
+            return;
+        }
 
-            while(!customer.isTakenDrink()){
-                synchronized(QueueOfTakingDrink){
-                    QueueOfTakingDrink.wait();
+        // while(!customer.isTakenDrink()){
+        //     synchronized(QueueOfTakingDrink){
+        //         QueueOfTakingDrink.wait();
+        //     }
+        // }
+
+        // if(customer.isTakenDrink()){
+        //     Customer cus = QueueOfTakingDrink.poll();
+        //     AddCustomerToFindingSeatQueue(cus);}
+
+        
+
+        while(true){
+            while(!customer.isTakenDrink() && !customer.getLeaveDueTimer()){
+                synchronized(QueueOfFindingSeat){
+                    QueueOfFindingSeat.wait();
                 }
             }
 
+            if(customer.getLeaveDueTimer()){
+                break;
+            }
+
             if(customer.isTakenDrink()){
-                Customer cus = QueueOfTakingDrink.poll();
-                AddCustomerToFindingSeatQueue(cus);}
+                AddCustomerToFindingSeatQueue(customer);
+                break;
+            }
+        }
                         
     }
     
-    public void AddCustomerToTakingDrinkQueue(Customer customer){//For them to take their drink
-        try {
-            QueueOfTakingDrink.put(customer);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(CoffeeShop.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
+    // public void AddCustomerToTakingDrinkQueue(Customer customer){//For them to take their drink
+    //     try {
+    //         QueueOfTakingDrink.put(customer);
+    //     } catch (InterruptedException ex) {
+    //         Logger.getLogger(CoffeeShop.class.getName()).log(Level.SEVERE, null, ex);
+    //     }
+    // }
 
     public void AddCustomerToFindingSeatQueue(Customer customer){
+        //notify customer to take drink
+
         try {
             QueueOfFindingSeat.put(customer);  
         } catch (InterruptedException ex) {
@@ -66,23 +103,48 @@ public class CoffeeShop {
         AddCustomerToSeat();        
     }       
 
+    //Issue 1: Customer behind the queue will get the seat first, due to for loop and while loop
+    //Issue 2: Customer who did not want to share the table will become willing to after certain amount of time
     public void AddCustomerToSeat(){ 
-        Customer customer = QueueOfFindingSeat.poll();    
+        synchronized(QueueOfAccordingSeat){
+            Customer cus = QueueOfFindingSeat.poll();
+            try {
+                QueueOfAccordingSeat.put(cus);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        Customer customer = QueueOfAccordingSeat.peek();
         if(customer!=null){
             System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId()+ ": I have taken my " + customer.getOrder() + customer.GetMyColorReset());
             System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId()+ ": I am now trying to find a seat" + customer.GetMyColorReset());
             while(customer.isInSeat() == false){
                 for(int i = 0; i < 5; i++){
                     try {
-                            tables[i].FindSeat(customer);                                                                            
+                            tables[i].FindSeat(customer);                                          
                     } catch (InterruptedException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
-                    if(customer.isInSeat() == true){
+                    if(customer.isInSeat() == true){                        
                         break;
                     }
                 }
+
+                //If customer who did not want to share table, cannnot find a seat after search all the table. He will be willing to share the table
+                if(customer.isInSeat() == false && customer.isShareSeat() == false){
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                    customer.setShareSeat(true);
+                    System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + ": I am now willing to share the table" + customer.GetMyColorReset());
+                }
+                //Since if customer thread will try lock a table for 1 second, after 5 table, it will be 5 second, add on the 1 second sleep, 6 will be total. 
+                //Hence, meeting the requirement: After certain amount of time. 
             }
         }
     }
@@ -128,17 +190,21 @@ public class CoffeeShop {
             System.out.println(barista.getMyColor() + "\t\t\t\t\tBarista " + barista.getBaristaId() + ": I am sleeping" + barista.getMyColorReset());            
             WaitCustomerToCome();}
         
-        if(barista.isClosingTime() & QueueOfOrder.isEmpty()){
+        if(barista.isClosingTime() /*& QueueOfOrder.isEmpty()*/){
+            System.out.println(barista.getMyColor() + "\t\t\t\t\tBarista " + barista.getBaristaId() + ": I am going home" + barista.getMyColorReset());
+            return;
+        }else if(LeftCustomer == 20){
             System.out.println(barista.getMyColor() + "\t\t\t\t\tBarista " + barista.getBaristaId() + ": I am going home" + barista.getMyColorReset());
             return;
         }
         // System.out.println("Barista " + barista.getBaristaId() + " trying to put itself in the synchronized queue of barista taking order");
+        Customer customer = null;
          synchronized(QueueOfBaristaTakingOrder){
              try {
                 //  System.out.println("Try putting barista " + barista.getBaristaId() + " in the queue of barista taking order");
                  QueueOfBaristaTakingOrder.put(barista);
                 //  System.out.println("Barista " + barista.getBaristaId() + " in the queue of barista taking order");
-                 Customer customer = QueueOfOrder.poll();
+                 customer = QueueOfOrder.poll();
                 //  System.out.println("Customer polled from order queue");
                  if(customer!= null){
                  System.out.println(barista.getMyColor() + "\t\t\t\t\tBarista " + barista.getBaristaId() + ": Hi, May I take your order? (To Customer " + customer.GetCustomerId() + ")" + barista.getMyColorReset());
@@ -146,7 +212,7 @@ public class CoffeeShop {
                  System.out.println(customer.GetMyColor()+ "Customer " + customer.GetCustomerId()+ ": Hi, I want to order " + customer.getOrder() + customer.GetMyColorReset());
                  barista.setCurrentWorkingDrink(customer.getOrder());         
                  barista.setCurrentWorkingCustomer(customer);        
-                AddCustomerToTakingDrinkQueue(customer);
+                // AddCustomerToTakingDrinkQueue(customer);
                 //  System.out.println("Customer added to the taking drink queue");                                                                  
                  QueueOfBaristaMakingDrink.put(barista);
                     // System.out.println("Barista " + barista.getBaristaId() + " in the queue of barista making drink");
@@ -158,7 +224,7 @@ public class CoffeeShop {
              }
          }
         try {
-            MakeDrink();
+            MakeDrink(customer);
             System.out.println("Barista " + barista.getBaristaId() + ": I am done with the order");
         } catch (InterruptedException ex) {
             Logger.getLogger(CoffeeShop.class.getName()).log(Level.SEVERE, null, ex);
@@ -180,7 +246,7 @@ public class CoffeeShop {
         }
      }
 
-     public void MakeDrink() throws InterruptedException{
+     public void MakeDrink(Customer customer) throws InterruptedException{
         Barista barista = null;         
         try {
             barista = QueueOfBaristaMakingDrink.take();
@@ -197,12 +263,16 @@ public class CoffeeShop {
                     // synchronized(QueueOfTakingDrink){   
                     System.out.println(barista.getMyColor() + "\t\t\t\t\tBarista " + barista.getBaristaId() + ": Expresso for Customer " + barista.getCurrentWorkingCustomerID() + " is ready" + barista.getMyColorReset());
                     barista.setCustomerTakenDrink(true);
+                    synchronized(QueueOfFindingSeat){
+                        QueueOfFindingSeat.notifyAll();
+                    }
+                    // AddCustomerToFindingSeatQueue(customer);//notify customer to take drink
                     // AddCustomerToFindingSeatQueue(barista.getCurrentWorkingCustomer());
                     TotalEx++;
                     ExpressoMachine.unlock();
-                    synchronized(QueueOfTakingDrink){
-                        QueueOfTakingDrink.notify();
-                    }
+                    // synchronized(QueueOfTakingDrink){
+                    //     QueueOfTakingDrink.notify();
+                    // }
              }
              else if("Cappuccino".equals(barista.getCurrentWorkingDrink())){
                 System.out.println(barista.getMyColor() + "\t\t\t\t\tBarista " + barista.getBaristaId() + " trying to use expresso machine (For Customer " + barista.getCurrentWorkingCustomerID() + "'s Cappuccino)" + barista.getMyColorReset());
@@ -220,12 +290,16 @@ public class CoffeeShop {
                     // synchronized(QueueOfTakingDrink){   
                     System.out.println(barista.getMyColor() + "\t\t\t\t\tBarista " + barista.getBaristaId() + ": Cappuccino for Customer " + barista.getCurrentWorkingCustomerID() + " is ready" + barista.getMyColorReset());
                     barista.setCustomerTakenDrink(true);
+                    // AddCustomerToFindingSeatQueue(customer);
                     // AddCustomerToFindingSeatQueue(barista.getCurrentWorkingCustomer());
+                    synchronized(QueueOfFindingSeat){
+                        QueueOfFindingSeat.notifyAll();
+                    }
                     TotalCappu++;
                     MilkMachine.unlock();
-                    synchronized(QueueOfTakingDrink){
-                        QueueOfTakingDrink.notify();
-                    }
+                    // synchronized(QueueOfTakingDrink){
+                    //     QueueOfTakingDrink.notify();
+                    // }
                 
              }
              else if("Juice".equals(barista.getCurrentWorkingDrink())){                
@@ -237,12 +311,16 @@ public class CoffeeShop {
                         // synchronized(QueueOfTakingDrink){                                             
                         System.out.println(barista.getMyColor() + "\t\t\t\t\tBarista " + barista.getBaristaId() + ": Juice for Customer " + barista.getCurrentWorkingCustomerID() + " is ready" + barista.getMyColorReset());
                         barista.setCustomerTakenDrink(true);
+                        // AddCustomerToFindingSeatQueue(customer);
                         // AddCustomerToFindingSeatQueue(barista.getCurrentWorkingCustomer());
+                        synchronized(QueueOfFindingSeat){
+                            QueueOfFindingSeat.notifyAll();
+                        }
                         TotalJuice++;
                         JuiceTap.unlock();
-                        synchronized(QueueOfTakingDrink){
-                            QueueOfTakingDrink.notify();
-                        }
+                        // synchronized(QueueOfTakingDrink){
+                        //     QueueOfTakingDrink.notify();
+                        // }
                     
              }else{System.out.println(barista.getMyColor() + "\t\t\t\t\tBarista " + barista.getBaristaId() + " is confused" + barista.getMyColorReset());}
          }
@@ -265,6 +343,10 @@ public class CoffeeShop {
         System.out.println("Total Expresso: " + TotalEx);
         System.out.println("Total Cappuccino: " + TotalCappu);
         System.out.println("Total Juice: " + TotalJuice);
+        System.out.println("Sales of Expresso: " + TotalEx*ExPrice);
+        System.out.println("Sales of Cappuccino: " + TotalCappu*CappuPrice);
+        System.out.println("Sales of Juice: " + TotalJuice*JuicePrice);
+        System.out.println("Total Sales: " + (TotalEx*ExPrice + TotalCappu*CappuPrice + TotalJuice*JuicePrice));
         System.out.println("===========================================");
     }
 

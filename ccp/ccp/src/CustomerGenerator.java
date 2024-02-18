@@ -6,13 +6,19 @@ public class CustomerGenerator extends Thread{
     CoffeeShop shop;
     boolean Closing;
     int CustomerCount = 0, MaxCustomer = 20;
+    Test test;
     
     //Function that randomize customer order and seat sharing
     
-    public CustomerGenerator(CoffeeShop shop){
+    public CustomerGenerator(CoffeeShop shop, Test test){
         this.shop = shop;
+        this.test = test;
     }
     
+    public int getMaxCustomer(){
+        return MaxCustomer;
+    }
+
     public void run(){    
         try {
             Thread.sleep(500);
@@ -21,6 +27,7 @@ public class CustomerGenerator extends Thread{
         }
         while(!Closing && CustomerCount<MaxCustomer){
         Customer customer = new Customer(Integer.toString(CustomerCount+1), shop);//Change the argument to random
+        test.customers.add(customer);
         customer.start();
         
         synchronized (this){

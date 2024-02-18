@@ -9,7 +9,7 @@ public class Table {
     private ReentrantLock tableLock;
     private boolean chair1IsOccupied, chair2IsOccupied;
     
-    public Table (int tablenumber){
+    public Table (int tablenumber, CoffeeShop shop){
         this.TableNumber = tablenumber;
         this.Chair1 = 1;
         this.Chair2 = 2;
@@ -18,6 +18,7 @@ public class Table {
         this.chair1Lock = new ReentrantLock();
         this.chair2Lock = new ReentrantLock();                
         this.tableLock = new ReentrantLock();
+        this.shop = shop;
     }
 
     public int getTableNumber() {
@@ -37,7 +38,7 @@ public class Table {
             processTime+= 25;
             System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + ": I am drinking my " + customer.getOrder() + " (" + processTime + "%)" + customer.GetMyColorReset());
             try {
-                Thread.sleep(1000);
+                Thread.sleep(5000);
             } catch (InterruptedException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -51,6 +52,7 @@ public class Table {
                 if(customer!=null && customer.isShareSeat()){
                     if(chair1Lock.tryLock(1000, TimeUnit.MILLISECONDS) && chair1IsOccupied == false){
                         customer.setInSeat(true);
+                        shop.QueueOfAccordingSeat.poll();
                         chair1IsOccupied = true;
                         try{
                             System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + ": I found a seat in Table " + TableNumber + " in Chair " + Chair1 + customer.GetMyColorReset());
@@ -58,6 +60,11 @@ public class Table {
                             //Drinking process
 
                             System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + ": I am leaving Table " + TableNumber + " in Chair " + Chair1 + customer.GetMyColorReset());
+                            // shop.IncrementLock.lock();
+                            synchronized(shop.QueueOfOrder){
+                            shop.CustomerInShop--;
+                            shop.LeftCustomer++;}
+                            // shop.IncrementLock.unlock();
                         }                
                         finally{
                             chair1IsOccupied = false;
@@ -66,12 +73,18 @@ public class Table {
                     }
                     else if(chair2Lock.tryLock(1000, TimeUnit.MILLISECONDS) && chair2IsOccupied == false){
                         customer.setInSeat(true);
+                        shop.QueueOfAccordingSeat.poll();
                         chair2IsOccupied = true;
                         try{
                             System.out.println(customer.GetMyColor()+ "Customer " + customer.GetCustomerId() + ": I found a seat in Table " + TableNumber + " in Chair " + Chair2 + customer.GetMyColorReset());
                             DrinkDrinkProcess(customer);
                             //Drinking process
                             System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + ": I am leaving Table " + TableNumber + " in Chair " + Chair2 + customer.GetMyColorReset());
+                            // shop.IncrementLock.lock();
+                            synchronized(shop.QueueOfOrder){
+                            shop.CustomerInShop--;
+                            shop.LeftCustomer++;}
+                            // shop.IncrementLock.unlock();
                         }          
                         finally{
                             chair2IsOccupied = false;
@@ -81,13 +94,19 @@ public class Table {
                 }
                 else if(customer!=null && !customer.isShareSeat() && !chair1IsOccupied && !chair2IsOccupied){
                     if(tableLock.tryLock(1000, TimeUnit.MILLISECONDS)){
-                        customer.setInSeat(true);                        
+                        customer.setInSeat(true);   
+                        shop.QueueOfAccordingSeat.poll();                     
                         chair1IsOccupied = true;
                         chair2IsOccupied = true;
                         System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + ": I found a seat in Table " + TableNumber + " and I do not want to share table" + customer.GetMyColorReset());
                         try {
                             DrinkDrinkProcess(customer);
                             System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + ": I am leaving Table " + TableNumber + customer.GetMyColorReset());
+                            // shop.IncrementLock.lock();
+                            synchronized(shop.QueueOfOrder){
+                            shop.CustomerInShop--;
+                            shop.LeftCustomer++;}
+                            // shop.IncrementLock.unlock();
                         }
                         finally{
                             chair1IsOccupied = false;
