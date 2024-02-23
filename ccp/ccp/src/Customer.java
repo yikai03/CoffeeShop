@@ -82,10 +82,15 @@ public class Customer extends Thread{
     public static String GenerateOrder(){//Randomly generate the order
         double randomValue = Math.random();//Random value
         int MaxCappu = 14, MaxEx = 4, MaxJuice = 2;//Maximum number of Cappuccino, Expresso, and Juice
-        if ((randomValue < 0.7 && CurCappu<MaxCappu) || (randomValue >= 0.7 && randomValue < 0.9 && CurEx==MaxEx && CurCappu < MaxCappu) || (randomValue >= 0.9 && CurJuice == MaxJuice && CurCappu < MaxCappu)) {//If the random value is less than 0.7 and the current number of Cappuccino is less than the maximum number of Cappuccino
+        //If the random value is less than 0.7 and the current number of Cappuccino is less than the maximum number of Cappuccino
+        if ((randomValue < 0.7 && CurCappu<MaxCappu) || 
+        (randomValue >= 0.7 && randomValue < 0.9 && CurEx==MaxEx && CurCappu < MaxCappu) || 
+        (randomValue >= 0.9 && CurJuice == MaxJuice && CurCappu < MaxCappu)) {            
             CurCappu++;//Increment the current number of Cappuccino            
             return "Cappuccino";//Return Cappuccino as Customer order
-        } else if ((randomValue < 0.9 && CurEx < MaxEx) || (CurCappu == MaxCappu && CurJuice == MaxJuice)) {//If the random value is less than 0.9 and the current number of Expresso is less than the maximum number of Expresso
+        }
+        //If the random value is less than 0.9 and the current number of Expresso is less than the maximum number of Expresso 
+        else if ((randomValue < 0.9 && CurEx < MaxEx) || (CurCappu == MaxCappu && CurJuice == MaxJuice)) {
             CurEx++;//Increment the current number of Expresso
             return "Expresso";//Return Expresso as Customer order
         } else if(CurJuice < MaxJuice) {//If the current number of Juice is less than the maximum number of Juice

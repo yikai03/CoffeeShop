@@ -19,7 +19,8 @@ public class LeaveTimer extends Thread{
                 customer.setLeaveDueTimer(true);//Set the customer leave due to timer
                 shop.CustomerInShop--;//Decrement the customer in shop
                 shop.LeftCustomer++;//Increment the left customer
-                System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + " has left the shop" + customer.GetMyColorReset());//Print out that the customer has left the shop
+                System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + 
+                " has left the shop due to long wait." + customer.GetMyColorReset());//Print out that the customer has left the shop
             }
         }        
         return;

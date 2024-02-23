@@ -9,7 +9,7 @@ public class Table {
     private ReentrantLock tableLock;//Lock for the table
     private boolean chair1IsOccupied, chair2IsOccupied;//Check if the chair is occupied
     
-    public Table (int tablenumber, CoffeeShop shop){
+    public Table (int tablenumber, CoffeeShop shop){//Constructor
         this.TableNumber = tablenumber;
         this.Chair1 = 1;
         this.Chair2 = 2;
@@ -33,19 +33,23 @@ public class Table {
         return Chair2;
     }
     public void DrinkDrinkProcess(Customer customer){
-        int processTime = 0;//Reset Process time for drinking
-        while(processTime < 100){
-            processTime+= 25;//Increment process time
+        int processTime = 25;//Reset Process time for drinking
+        System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + 
+        ": I am starting to drink my " + customer.getOrder() + customer.GetMyColorReset());
+        while(processTime <= 100){
             //Print out the drinking process
-            System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + ": I am drinking my " + customer.getOrder() + " (" + processTime + "%)" + customer.GetMyColorReset());
+            System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + 
+            ": I am drinking my " + customer.getOrder() + " (" + processTime + "%)" + customer.GetMyColorReset());
+            processTime+= 25;//Increment process time
             try {
-                Thread.sleep((long) (3000 + Math.random() * 3000));//Randomly generate the drinking time from 3 second to 6 second                
+                Thread.sleep((long) (350 + Math.random() * 350));//Randomly generate the drinking time from 3 second to 6 second                
             } catch (InterruptedException e) {                
                 e.printStackTrace();
             }
         }
         //Print out that the customer is done drinking
-        System.out.println(customer.GetMyColor()+ "Customer " + customer.GetCustomerId() + ": I am done drinking my " + customer.getOrder() + customer.GetMyColorReset());
+        System.out.println(customer.GetMyColor()+ "Customer " + customer.GetCustomerId() + 
+        ": I am done drinking my " + customer.getOrder() + customer.GetMyColorReset());
      }
     
     public void FindSeat(Customer customer) throws InterruptedException{
@@ -56,10 +60,12 @@ public class Table {
                 chair1IsOccupied = true;//Set the chair 1 is occupied
                 try{
                     //Print out that the customer found a seat
-                    System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + ": I found a seat in Table " + TableNumber + " in Chair " + Chair1 + customer.GetMyColorReset());
+                    System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + 
+                    ": I found a seat in Table " + TableNumber + " in Chair " + Chair1 + customer.GetMyColorReset());
                     DrinkDrinkProcess(customer);//Drinking process
                     //Print out that the customer is leaving the seat
-                    System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + ": I am leaving Table " + TableNumber + " in Chair " + Chair1 + customer.GetMyColorReset());                        
+                    System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + 
+                    ": I am leaving Table " + TableNumber + " in Chair " + Chair1 + customer.GetMyColorReset());                        
                     synchronized(shop.QueueOfOrder){
                         shop.CustomerInShop--;//Decrement the customer in shop
                         shop.LeftCustomer++;//Increment the left customer
@@ -75,10 +81,12 @@ public class Table {
                 shop.QueueOfAccordingSeat.poll();//Remove the customer from the queue
                 chair2IsOccupied = true;//Set the chair 2 is occupied
                 try{
-                    System.out.println(customer.GetMyColor()+ "Customer " + customer.GetCustomerId() + ": I found a seat in Table " + TableNumber + " in Chair " + Chair2 + customer.GetMyColorReset());
+                    System.out.println(customer.GetMyColor()+ "Customer " + customer.GetCustomerId() + 
+                    ": I found a seat in Table " + TableNumber + " in Chair " + Chair2 + customer.GetMyColorReset());
                     DrinkDrinkProcess(customer);//Drinking process
                     //Print out that the customer is leaving the seat                            
-                    System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + ": I am leaving Table " + TableNumber + " in Chair " + Chair2 + customer.GetMyColorReset());                            
+                    System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + 
+                    ": I am leaving Table " + TableNumber + " in Chair " + Chair2 + customer.GetMyColorReset());                            
                     synchronized(shop.QueueOfOrder){
                         shop.CustomerInShop--;//Decrement the customer in shop
                         shop.LeftCustomer++;//Increment the left customer
@@ -97,11 +105,13 @@ public class Table {
                 chair1IsOccupied = true;//Set the chair 1 is occupied
                 chair2IsOccupied = true;//Set the chair 2 is occupied
                 //Print out that the customer found a seat
-                System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + ": I found a seat in Table " + TableNumber + " and I do not want to share table" + customer.GetMyColorReset());
+                System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + 
+                ": I found a seat in Table " + TableNumber + " and I do not want to share table" + customer.GetMyColorReset());
                 try {
                     DrinkDrinkProcess(customer);//Drinking process
                     //Print out that the customer is leaving the seat
-                    System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + ": I am leaving Table " + TableNumber + customer.GetMyColorReset());                            
+                    System.out.println(customer.GetMyColor() + "Customer " + customer.GetCustomerId() + 
+                    ": I am leaving Table " + TableNumber + customer.GetMyColorReset());                            
                     synchronized(shop.QueueOfOrder){//Synchronize the queue of order
                         shop.CustomerInShop--;//Decrement the customer in shop
                         shop.LeftCustomer++;//Increment the left customer

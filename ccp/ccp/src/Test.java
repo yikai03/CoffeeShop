@@ -18,7 +18,6 @@ public class Test extends Thread{
     public void run(){        
         while(shop.LeftCustomer < 20){//While all the customer left the shop
             try{
-                System.out.println("test still in while loop, customer in shop" + shop.LeftCustomer);//Print out the customer in shop
                 Thread.sleep(1000);//Wait for 1 second
             }
             catch(InterruptedException e){
@@ -33,12 +32,12 @@ public class Test extends Thread{
         }
 
         System.out.println("===================================================================================================================");//Print out the status of the threads
-        System.out.println(b1.getBaristaId() + " status: "+b1.getState());
-        System.out.println(b2.getBaristaId() + " status: "+b2.getState());
-        System.out.println(b3.getBaristaId() + " status: "+b3.getState());
+        System.out.println("Barista " + b1.getBaristaId() + " status: "+b1.getState());
+        System.out.println("Barista " + b2.getBaristaId() + " status: "+b2.getState());
+        System.out.println("Barista " + b3.getBaristaId() + " status: "+b3.getState());
 
         for(int i = 0; i < customers.size(); i++){
-            System.out.println(customers.get(i).GetCustomerId() + " status: "+customers.get(i).getState());
+            System.out.println("Customer " + customers.get(i).GetCustomerId() + " status: "+customers.get(i).getState());
         }
     }
 }

@@ -24,7 +24,8 @@ public class Clock extends Thread{
                     e.printStackTrace();
                 }
                 //If after 60 loop, stil did not met below condition, Closing Assumption 1 will reach
-                if(shop.LeftCustomer == 20 && barista1.getState() == Thread.State.WAITING && barista2.getState() == Thread.State.WAITING && barista3.getState() == Thread.State.WAITING){
+                if(shop.LeftCustomer == 20 && barista1.getState() == Thread.State.WAITING && 
+                barista2.getState() == Thread.State.WAITING && barista3.getState() == Thread.State.WAITING){
                     System.out.println("\u001b[37;47m" + "Shop: Seems like there is no more customer, the shop will close" + "\u001b[0m");
                     barista1.setClosingTime(true);
                     barista2.setClosingTime(true);
@@ -35,7 +36,8 @@ public class Clock extends Thread{
                         }
                     }
                     while(true){
-                        if(shop.LeftCustomer == 20 && (barista1.getState() == Thread.State.TERMINATED) && (barista2.getState() == Thread.State.TERMINATED) && (barista3.getState() == Thread.State.TERMINATED)){
+                        if(shop.LeftCustomer == 20 && (barista1.getState() == Thread.State.TERMINATED) && 
+                        (barista2.getState() == Thread.State.TERMINATED) && (barista3.getState() == Thread.State.TERMINATED)){
                             shop.showTotalDrink();//Show the total drink that has been made
                             break;
                         }
@@ -51,14 +53,16 @@ public class Clock extends Thread{
 
             while(shop.CustomerInShop!=0){//If there is still customer in the shop, the shop will wait for another 3 seconds
                 try {
-                    System.out.println("\u001b[37;47m" + "Clock: Seems like there is still " + shop.CustomerInShop + " customer in shop! Wait for another 3 second..." + "\u001b[0m");
+                    System.out.println("\u001b[37;47m" + "Clock: Seems like there is still " + 
+                    shop.CustomerInShop + " customer in shop! Wait for another 3 second..." + "\u001b[0m");
                     Thread.sleep(3000);
                 } catch (InterruptedException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             }
-            System.out.println("\u001b[37;47m" + "Clock: It's closing time!" + "\u001b[0m");//If there is no customer in the shop, the shop will close
+            System.out.println("\u001b[37;47m" + "Clock: It's closing time!" + "\u001b[0m");
+            //If there is no customer in the shop, the shop will close
             barista1.setClosingTime(true);
             barista2.setClosingTime(true);
             barista3.setClosingTime(true);
@@ -69,7 +73,8 @@ public class Clock extends Thread{
             }
         
             while(true){
-                if((barista1.getState() == Thread.State.TERMINATED) && (barista2.getState() == Thread.State.TERMINATED) && (barista3.getState() == Thread.State.TERMINATED)){
+                if((barista1.getState() == Thread.State.TERMINATED) 
+                && (barista2.getState() == Thread.State.TERMINATED) && (barista3.getState() == Thread.State.TERMINATED)){
                     shop.showTotalDrink();
                     break;
                 }
